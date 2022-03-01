@@ -72,6 +72,23 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
+# General search template:
+def GeneralSearch(problem,container):
+    init_state = problem.getStartState()
+    unvisited = container()
+    visited = set()
+    unvisited.push((init_state,[]))
+    
+    while not unvisited.isEmpty():
+        (current_state,path) = unvisited.pop()
+        if problem.isGoalState(current_state): return path
+        elif current_state not in visited:
+            visited.add(current_state)
+            for successor in problem.getSuccessors(current_state): 
+                if successor[0] not in visited:
+                    unvisited.push((successor[0],path+[successor[1]]))
+
+
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -87,12 +104,12 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return GeneralSearch(problem,util.Stack)
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return GeneralSearch(problem,util.Queue)
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
