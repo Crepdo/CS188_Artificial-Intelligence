@@ -288,6 +288,8 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
+        # frozenset is hashable (in GeneralSearch), set is not
+        self.CornerList = frozenset(self.corners)
 
     def getStartState(self):
         """
@@ -295,14 +297,14 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return (self.startingPosition,self.CornerList)
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return len(state[1]) == 0
 
     def getSuccessors(self, state):
         """
@@ -325,6 +327,14 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
+            (x,y) = state[0]
+            dx,dy = Actions.directionToVector(action)
+            (nextx,nexty) = int(x+dx), int(y+dy)
+            hitsWall = self.walls[nextx][nexty]
+            if not hitsWall:
+                # state=(pos,cornerlist-pos),action,cost=1
+                nextstate = (nextx,nexty)
+                successors.append(((nextstate,state[1]-{nextstate}),action,1))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -360,7 +370,11 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    (position,cornerNumber)=state
+    # find the max among pos's distance to corners
+    # hint: consider a 1d-2point case,so not sum
+    return max(map(lambda x:util.manhattanDistance(position,x),corners)) #!
+
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
