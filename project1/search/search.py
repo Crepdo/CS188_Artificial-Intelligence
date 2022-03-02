@@ -72,7 +72,7 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
-# General search template:
+# general search template:
 def GeneralSearch(problem,container):
     init_state = problem.getStartState()
     unvisited = container()
@@ -114,7 +114,11 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # priority queue for cost
+    def PriorityQueueCost():
+        return util.PriorityQueueWithFunction(lambda x:problem.getCostOfActions(x[1]))
+    return GeneralSearch(problem,PriorityQueueCost)
+    
 
 def nullHeuristic(state, problem=None):
     """
@@ -126,7 +130,9 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    def PriorityQueueAstar():
+        return util.PriorityQueueWithFunction(lambda x:problem.getCostOfActions(x[1])+heuristic(x[0],problem))
+    return GeneralSearch(problem,PriorityQueueAstar)
 
 
 # Abbreviations
