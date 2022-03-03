@@ -373,8 +373,12 @@ def cornersHeuristic(state, problem):
     (position,cornerNumber)=state
     # find the max among pos's distance to corners
     # hint: consider a 1d-2point case,so not sum
-    return max(map(lambda x:util.manhattanDistance(position,x),corners)) #!
-
+    # return max(map(lambda x:util.manhattanDistance(position,x),corners)) # bad 2342 node
+    if len(state[1]) == 0: return 0 # goal state valuelist={}
+    valuelist = []
+    for unvisited in state[1]:
+        valuelist.append(abs(unvisited[0]-state[0][0]) + abs(unvisited[1]-state[0][1])) #manhattanDistance 1136 since only unvisited
+    return max(valuelist)
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
