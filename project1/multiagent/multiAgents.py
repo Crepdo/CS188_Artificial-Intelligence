@@ -48,7 +48,7 @@ class ReflexAgent(Agent):
         chosenIndex = random.choice(bestIndices) # Pick randomly among the best
 
         "Add more of your code here if you want to"
-
+        
         return legalMoves[chosenIndex]
 
     def evaluationFunction(self, currentGameState, action):
@@ -74,7 +74,17 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return childGameState.getScore()
+        newFoodlist = newFood.asList()
+        ghostPoslist = [(ghost.getPosition()[0],ghost.getPosition()[1]) for ghost in newGhostStates]
+        # fail:
+        if min(newScaredTimes) <=0 and (newPos in ghostPoslist): return -1
+        # get food:
+        if newPos in currentGameState.getFood().asList(): return 1
+        # sort 2 list to find closest
+        closestFoodlist = sorted(newFoodlist,key=lambda x: util.manhattanDistance(x,newPos))
+        closestGhostlist = sorted(ghostPoslist,key=lambda y: util.manhattanDistance(y,newPos))
+        # 1/distance_food - 1/distance_ghost
+        return (1/util.manhattanDistance(closestFoodlist[0],newPos)) - (1/util.manhattanDistance(closestGhostlist[0],newPos))
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -135,7 +145,36 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        ghostNum = gameState.getNumAgents()-1
+        
+        # ghost,min:
+        def minForcer(state, depth, ghostNo):
+            # game end detection:
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            value = 9e5
+            for action in state.getLegalActions(ghostNo):
+                if ghostNo == ghostNum: # last gost
+                    value = min(value, maxForcer(state.getNextState(ghostNo, action), depth+1))
+                else:
+                    value = min(value, minForcer(state.getNextState(ghostNo, action), depth, ghostNo+1))
+            return value
+
+        # pacman,max:
+        def maxForcer(state, depth):
+            # game end detection:
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            value = -9e5
+            for action in state.getLegalActions(0):
+                value = max(value, minForcer(state.getNextState(0,action), depth, 1))
+            return value
+        # init: start from pacman's actions:
+        valuelist = [(action, minForcer(gameState.getNextState(0,action),0,1)) for action in gameState.getLegalActions(0)]
+        # sort according to returned value (since start from MAX node):
+        valuelist.sort(key=lambda k: k[1])
+        #return the action
+        return valuelist[-1][0]
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
