@@ -282,10 +282,37 @@ def betterEvaluationFunction(currentGameState):
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
+    DESCRIPTION: Use (1/closest food dist -1/closest ghost dist) and the default scoreEvaluationFunction(currentGameState) 
+    for basic evaluation (with edge detection when the # of food or ghost become zero)
+    Add a capsule number detection boost to give some bonus to evaluation function when low # of capsules
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    # evaluation based on current game state:
+    newPos = currentGameState.getPacmanPosition()
+    newGhostStates = currentGameState.getGhostStates()
+    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+    newFoodlist = currentGameState.getFood().asList()
+    ghostPoslist = [(ghost.getPosition()[0],ghost.getPosition()[1]) for ghost in newGhostStates]
+    # fail:
+    if min(newScaredTimes) <=0 and (newPos in ghostPoslist): return -1
+    if currentGameState.isLose(): return -1
+    # get food:
+    if newPos in currentGameState.getFood().asList(): return 10
+    # sort 2 list to find closest
+    closestFoodlist = sorted(newFoodlist,key=lambda x: util.manhattanDistance(x,newPos))
+    closestGhostlist = sorted(ghostPoslist,key=lambda y: util.manhattanDistance(y,newPos))
+    
+    value = 0
+    # low capsule left boost, boost value 50 depends:
+    if len(currentGameState.getCapsules()) < 2: value += 50
+
+    if len(closestFoodlist) == 0 or len(closestGhostlist) == 0: # if empty, plainly credit 1
+        value += scoreEvaluationFunction(currentGameState) + 1
+    else: # 1/food dist -1/ghost dist
+        value += (scoreEvaluationFunction(currentGameState)
+        + 1/util.manhattanDistance(closestFoodlist[0],newPos) - 1/util.manhattanDistance(closestGhostlist[0],newPos))
+    return value
 
 # Abbreviation
 better = betterEvaluationFunction
