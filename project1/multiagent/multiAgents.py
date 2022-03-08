@@ -186,7 +186,49 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        ghostNum = gameState.getNumAgents()-1
+        
+        # ghost,min:
+        # pacmax: pacman's best option (max,downer limit) 
+        # ghostmin: ghost's best option (min, upper limit)
+        def minForcer(state, depth, ghostNo,pacmax,ghostmin):
+            # game end detection:
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            value = 9e10
+            for action in state.getLegalActions(ghostNo):
+                if ghostNo == ghostNum: # last gost
+                    value = min(value, maxForcer(state.getNextState(ghostNo, action), depth+1, pacmax, ghostmin))
+                else:
+                    value = min(value, minForcer(state.getNextState(ghostNo, action), depth, ghostNo+1, pacmax, ghostmin))
+                if value < pacmax: return value # pruning
+                ghostmin = min(ghostmin, value)
+            return value
+
+        # pacman,max:
+        def maxForcer(state, depth, pacmax, ghostmin):
+            # game end detection:
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            value = -9e10
+            for action in state.getLegalActions(0):
+                value = max(value, minForcer(state.getNextState(0,action), depth, 1, pacmax, ghostmin))
+                if value > ghostmin: return value # pruning
+                pacmax = max(pacmax, value)
+            return value
+    
+        # init: start from pacman's actions, with pruning:
+        pacmax = -9e5; ghostmin = 9e5
+        path = None
+        for action in gameState.getLegalActions(0):
+            # for each ghost in the first layer, start from 1st ghost:
+            it_val = minForcer(gameState.getNextState(0,action),0,1,pacmax, ghostmin)
+            if it_val > ghostmin: return pacmax # pruning
+            # max(), and choose the corresponding path
+            if it_val > pacmax:
+                pacmax = it_val
+                path = action
+        return path
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -201,7 +243,39 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        ghostNum = gameState.getNumAgents()-1
+        # ghost, exp:
+        # no pruning
+        def expForcer(state, depth, ghostNo):
+            # game end detection:
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            value = 0
+            # probability:
+            probability = 1/len(state.getLegalActions(ghostNo))
+            for action in state.getLegalActions(ghostNo):
+                if ghostNo == ghostNum: # last gost
+                    value += probability*maxForcer(state.getNextState(ghostNo, action), depth+1)
+                else:
+                    value += probability*expForcer(state.getNextState(ghostNo, action), depth, ghostNo+1)
+            return value
+
+        # pacman,max:
+        def maxForcer(state, depth):
+            # game end detection:
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            value = -9e10
+            for action in state.getLegalActions(0):
+                value = max(value, expForcer(state.getNextState(0,action), depth, 1))
+            return value
+    
+        # init: start from pacman's actions:
+        valuelist = [(action, expForcer(gameState.getNextState(0,action),0,1)) for action in gameState.getLegalActions(0)]
+        # sort according to returned value (since start from MAX node):
+        valuelist.sort(key=lambda k: k[1])
+        #return the action
+        return valuelist[-1][0]
 
 def betterEvaluationFunction(currentGameState):
     """

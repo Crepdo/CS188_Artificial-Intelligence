@@ -509,8 +509,8 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
+        return search.uniformCostSearch(problem) # just use UCS
+        
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
     A search problem for finding a path to any food.
@@ -545,7 +545,7 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.food[x][y]
 
 class ApproximateSearchAgent(Agent):
     "Implement your agent here.  Change anything but the class name."
@@ -566,7 +566,7 @@ class ApproximateSearchAgent(Agent):
 def mazeDistance(point1, point2, gameState):
     """
     Returns the maze distance between any two points, using the search functions
-    you have already built. The gameState can be any game state -- Pacman's
+    you have already built. The gameath = []State can be any game state -- Pacman's
     position in that state is ignored.
 
     Example usage: mazeDistance( (2,4), (5,6), gameState)
