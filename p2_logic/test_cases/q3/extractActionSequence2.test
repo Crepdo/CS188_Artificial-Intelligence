@@ -1,0 +1,47 @@
+class: "ExtractActionSequenceTest"
+success: "PASS"
+failure: "NO PASS"
+
+# Python statements initializing variables for the test below.
+preamble: """
+import logic
+
+action_strs = ['North','East','South','West']
+    
+model = {    logic.PropSymbolExpr('South[0]'): True, 
+             logic.PropSymbolExpr('East[7]'): False,
+             logic.PropSymbolExpr('South[5]'): True,
+             logic.PropSymbolExpr('North[6]'): True,
+             logic.PropSymbolExpr('West[0]'): False, 
+             logic.PropSymbolExpr('West[7]'): True,
+             logic.PropSymbolExpr('South[8]'): True,
+             logic.PropSymbolExpr('East[1]'): False,
+             logic.PropSymbolExpr('East[10]'): True,
+             logic.PropSymbolExpr('North[11]'): True,
+             logic.PropSymbolExpr('South[2]'): False,
+             logic.PropSymbolExpr('West[3]'): True,
+             logic.PropSymbolExpr('South[4]'): True,
+             logic.PropSymbolExpr('West[5]'): False,
+             logic.PropSymbolExpr('East[6]'): False,
+             logic.PropSymbolExpr('North[4]'): False,
+             logic.PropSymbolExpr('North[8]'): False,
+             logic.PropSymbolExpr('North[9]'): True,
+             logic.PropSymbolExpr('East[3]'): False,
+             logic.PropSymbolExpr('North[0]'): False, 
+             logic.PropSymbolExpr('East[0]'): False, 
+             logic.PropSymbolExpr('West[1]'): True, 
+             logic.PropSymbolExpr('West[9]'): False,
+             logic.PropSymbolExpr('West[10]'): False,
+             logic.PropSymbolExpr('South[11]'): False,
+             logic.PropSymbolExpr('South[1]'): False, 
+             logic.PropSymbolExpr('North[1]'): False, 
+             logic.PropSymbolExpr('North[2]'): True,
+        }
+
+ans = logicPlan.extractActionSequence(model, action_strs)
+"""
+
+# A python expression to be evaluated.  This expression must return the 
+# same result for the student and instructor's code.
+test: "ans"
+

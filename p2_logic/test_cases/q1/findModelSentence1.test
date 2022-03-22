@@ -1,0 +1,8 @@
+class: "EvalTest"
+success: "PASS"
+failure: "NO PASS"
+
+# A python expression to be evaluated.  This expression must return the 
+# same result for the student and instructor's code.
+
+test: "sorted([k_v for k_v in logicPlan.findModel(logicPlan.sentence1()).items()], key=lambda x:str(x[0]))"

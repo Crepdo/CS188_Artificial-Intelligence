@@ -1,0 +1,52 @@
+class: "LogicStatementTest"
+success: "PASS"
+failure: "NO PASS"
+
+# Human-readable representation of the configuration being tested:
+# %%%%
+# %  %
+# %P %
+# %%%%
+
+pairs: "model_val_pairs"
+
+# Python statements initializing variables for the test below.
+preamble: """
+import logic
+import itertools
+import layout
+
+board = '%%%%\n%  %\n%P %\n%%%%'
+
+lay = layout.Layout([row.strip() for row in board.strip().split('\n')])
+walls_grid = lay.walls
+_, (x, y) = lay.agentPositions[0]
+t = 1
+
+axioms = logicPlan.pacmanSuccessorStateAxioms(x, y, t, walls_grid)
+
+symbols = [ logic.PropSymbolExpr(logicPlan.pacman_str,x,y,t)
+          , logic.PropSymbolExpr(logicPlan.pacman_str,x,y+1,t-1)
+          , logic.PropSymbolExpr(logicPlan.pacman_str,x+1,y,t-1)
+          , logic.PropSymbolExpr(logicPlan.pacman_str,x,y-1,t-1)
+          , logic.PropSymbolExpr(logicPlan.pacman_str,x-1,y,t-1)
+          , logic.PropSymbolExpr('North',t-1)
+          , logic.PropSymbolExpr('East',t-1)
+          , logic.PropSymbolExpr('South',t-1)
+          , logic.PropSymbolExpr('West',t-1)
+          ]
+
+assignments = itertools.product([True, False], repeat=len(symbols))
+models = [ { sym : ass for sym, ass in zip(symbols, assignment) } 
+        for assignment in assignments ]
+
+truth_vals = [ logic.pl_true(axioms, model) for model in models ]
+model_val_pairs = list(zip(models, truth_vals))
+"""
+
+# A python expression to be evaluated.  This expression must return the 
+# same result for the student and instructor's code.
+
+test: "truth_vals"
+
+

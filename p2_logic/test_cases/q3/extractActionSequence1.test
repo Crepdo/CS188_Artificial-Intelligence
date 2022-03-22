@@ -1,0 +1,39 @@
+class: "ExtractActionSequenceTest"
+success: "PASS"
+failure: "NO PASS"
+
+# Python statements initializing variables for the test below.
+preamble: """
+import logic
+
+action_strs = ['North','East','South','West']
+    
+model = {    logic.PropSymbolExpr('P[2,1,0]'): False,
+             logic.PropSymbolExpr('East[1]'): False,
+             logic.PropSymbolExpr('P[2,2,2]'): False,
+             logic.PropSymbolExpr('West[0]'): False, 
+             logic.PropSymbolExpr('P[2,1,2]'): False, 
+             logic.PropSymbolExpr('P[1,2,1]'): False, 
+             logic.PropSymbolExpr('South[1]'): False, 
+             logic.PropSymbolExpr('South[0]'): True, 
+             logic.PropSymbolExpr('North[1]'): False, 
+             logic.PropSymbolExpr('North[0]'): False, 
+             logic.PropSymbolExpr('East[0]'): False, 
+             logic.PropSymbolExpr('West[1]'): True, 
+             logic.PropSymbolExpr('P[1,1,2]'): True, 
+             logic.PropSymbolExpr('P[1,1,0]'): False, 
+             logic.PropSymbolExpr('P[2,2,1]'): False, 
+             logic.PropSymbolExpr('P[1,1,1]'): False, 
+             logic.PropSymbolExpr('P[1,2,0]'): False, 
+             logic.PropSymbolExpr('P[2,1,1]'): True, 
+             logic.PropSymbolExpr('P[1,2,2]'): False, 
+             logic.PropSymbolExpr('P[2,2,0]'): True
+        }
+
+ans = logicPlan.extractActionSequence(model, action_strs)
+"""
+
+# A python expression to be evaluated.  This expression must return the 
+# same result for the student and instructor's code.
+test: "ans"
+
