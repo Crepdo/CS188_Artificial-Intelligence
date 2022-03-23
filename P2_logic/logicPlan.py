@@ -17,11 +17,13 @@ In logicPlan.py, you will implement logic planning methods which are called by
 Pacman agents (in logicAgents.py).
 """
 
+from this import s
 import util
 import sys
 import logic
 import game
 
+from logic import *
 
 pacman_str = 'P'
 ghost_pos_str = 'G'
@@ -74,7 +76,8 @@ def sentence1():
     (not A) or (not B) or C
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    A = Expr('A'); B = Expr('B'); C = Expr('C')
+    return conjoin([(A|B), ((~A)%((~B)|C)), disjoin([(~A),(~B),C])])
 
 def sentence2():
     """Returns a logic.Expr instance that encodes that the following expressions are all true.
@@ -85,7 +88,8 @@ def sentence2():
     (not D) implies C
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    A = Expr('A'); B = Expr('B'); C = Expr('C'); D = Expr('D')
+    return conjoin([(C%(B|D)), A>>((~B)&(~D)), (~(B&(~C)))>>A, ~D>>C])
 
 def sentence3():
     """Using the symbols WumpusAlive[1], WumpusAlive[0], WumpusBorn[0], and WumpusKilled[0],
@@ -100,14 +104,22 @@ def sentence3():
     The Wumpus is born at time 0.
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    alive0 = PropSymbolExpr('WumpusAlive',0)
+    alive1 = PropSymbolExpr('WumpusAlive',1)
+    born0 = PropSymbolExpr('WumpusBorn',0)
+    killed0 = PropSymbolExpr('WumpusKilled',0)
+    return conjoin([ alive1%((alive0 & (~killed0)) | ((~alive0)&born0)),  ~(alive0&born0), born0])
+
+
 
 def findModel(sentence):
     """Given a propositional logic sentence (i.e. a logic.Expr instance), returns a satisfying
     model if one exists. Otherwise, returns False.
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    res_model = pycoSAT(to_cnf(sentence))
+    if not res_model: return False
+    return res_model
 
 def atLeastOne(literals) :
     """
@@ -129,7 +141,7 @@ def atLeastOne(literals) :
     True
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return disjoin(literals)
 
 
 def atMostOne(literals) :
@@ -139,8 +151,11 @@ def atMostOne(literals) :
     the expressions in the list is true.
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    res = []
+    # make 2 expr a pair for or judgement:
+    for twin_bool in itertools.combinations(literals,2):
+        res.append(~twin_bool[0] | ~twin_bool[1])
+    return conjoin(res)
 
 def exactlyOne(literals) :
     """
@@ -149,7 +164,7 @@ def exactlyOne(literals) :
     the expressions in the list is true.
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return atLeastOne(literals) & atMostOne(literals)
 
 
 def extractActionSequence(model, actions):
@@ -165,9 +180,14 @@ def extractActionSequence(model, actions):
     ['West', 'South', 'North']
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
-
+    res = []
+    for (symbol,value) in model.items():
+        parse = PropSymbolExpr.parseExpr(symbol)
+        # valid action, value = true
+        if parse[0] in actions and value:
+            res.append(parse)
+    return [par[0] for par in sorted(res,key=lambda x:int(x[1]))]
+            
 def pacmanSuccessorStateAxioms(x, y, t, walls_grid):
     """
     Successor state axiom for state (x,y,t) (from t-1), given the board (as a 
@@ -175,8 +195,15 @@ def pacmanSuccessorStateAxioms(x, y, t, walls_grid):
     Current <==> (previous position at time t-1) & (took action to move to x, y)
     """
     "*** YOUR CODE HERE ***"
-    return logic.Expr('A') # Replace this with your expression
+    # actions and matched previous position
+    act_pos_list = [(x,y-1,'North'), (x,y+1,'South'), (x+1,y,'West'), (x-1,y,'East')]
 
+    valid_axiom = [PropSymbolExpr(pacman_str, x, y, t-1) & PropSymbolExpr(action, t-1)
+            for x, y, action in act_pos_list if not walls_grid[x][y]]
+    
+    if not valid_axiom: return False
+    #P[x,y,t] <=> axiom
+    return PropSymbolExpr(pacman_str, x, y, t) % disjoin(valid_axiom)
 
 def positionLogicPlan(problem):
     """
@@ -184,12 +211,36 @@ def positionLogicPlan(problem):
     Available actions are game.Directions.{NORTH,SOUTH,EAST,WEST}
     Note that STOP is not an available action.
     """
+    "*** YOUR CODE HERE ***"
+
     walls = problem.walls
     width, height = problem.getWidth(), problem.getHeight()
+    start_state = problem.getStartState()
+    goal_state = problem.getGoalState()
     
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # find all valid positions that are not wall
+    valid_positions = [(x,y) for x,y in itertools.product(range(1,width+1), range(1,height+1)) if not walls[x][y]]
+    logic_all = PropSymbolExpr(pacman_str, start_state[0], start_state[1], 0)
 
+    # positions other than start be reversed, join the init CNF logic
+    for i in range(1, width+1):
+        for j in range(1, height+1):
+            if (i,j)!=start_state: 
+                logic_all=conjoin(logic_all,~PropSymbolExpr(pacman_str,i,j,0))
+
+    t = 0 # time
+    actions = ['North', 'South', 'West', 'East']
+    while True:
+        this_action = [exactlyOne([PropSymbolExpr(act,t) for act in actions])]
+        successor = [pacmanSuccessorStateAxioms(x, y, t+1, walls) for x,y in valid_positions]
+        # update logic
+        logic_all = conjoin(logic_all, *this_action, *successor)
+        # find model with goal info
+        goal = PropSymbolExpr(pacman_str,goal_state[0], goal_state[1], t+1)
+        model = findModel(conjoin(logic_all, goal))
+        if model != False:
+            return extractActionSequence(model,actions)
+        t += 1
 
 def foodLogicPlan(problem):
     """
@@ -198,11 +249,40 @@ def foodLogicPlan(problem):
     Available actions are game.Directions.{NORTH,SOUTH,EAST,WEST}
     Note that STOP is not an available action.
     """
+    "*** YOUR CODE HERE ***"
     walls = problem.walls
     width, height = problem.getWidth(), problem.getHeight()
+    start_state,food = problem.getStartState()
+    food_list = food.asList()
 
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # find all valid positions that are not wall
+    valid_positions = [(x,y) for x,y in itertools.product(range(1,width+1), range(1,height+1)) if not walls[x][y]]
+    logic_all = PropSymbolExpr(pacman_str, start_state[0], start_state[1], 0)
+
+    # positions other than start be reversed, join the init CNF logic
+    for i in range(1, width+1):
+        for j in range(1, height+1):
+            if (i,j)!=start_state: 
+                logic_all=conjoin(logic_all,~PropSymbolExpr(pacman_str,i,j,0))
+
+    t = 0 # time
+    actions = ['North', 'South', 'West', 'East']
+    while True:
+        this_action = [exactlyOne([PropSymbolExpr(act,t) for act in actions])]
+        successor = [pacmanSuccessorStateAxioms(x, y, t+1, walls) for x,y in valid_positions]
+        # update logic
+        logic_all = conjoin(logic_all, *this_action, *successor)
+        # the constraints of foods:
+        food_goal = []
+        for food_it in food_list:
+                food_goal.append(atLeastOne([PropSymbolExpr(pacman_str, food_it[0], food_it[1], i) 
+                for i in range(0,t+1)]))
+        food_goal = conjoin(*food_goal)
+
+        model = findModel(conjoin(logic_all, food_goal))
+        if model != False:
+            return extractActionSequence(model,actions)
+        t += 1
 
 
 # Abbreviations
