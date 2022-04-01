@@ -102,8 +102,27 @@ def joinFactors(factors):
 
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    conded_vars = []; unconded_vars = []
+    for factor in factors:
+        con = factor.conditionedVariables()
+        uncon = factor.unconditionedVariables()
+        # remove self overlap here
+        for i in con: 
+            if (i not in conded_vars): conded_vars.append(i)
+        for j in uncon:
+            if (j not in unconded_vars): unconded_vars.append(j)
+    # remove con uncon overlap:
+    tmp = []
+    for k in conded_vars: 
+        if k not in unconded_vars: tmp.append(k)
+    conded_vars = tmp
+    # return factor, prob chain
+    res_factor = Factor(unconded_vars, conded_vars, factors[0].variableDomainsDict())
+    for assignment in res_factor.getAllPossibleAssignmentDicts():
+        prob = 1
+        for factor in factors: prob *= factor.getProbability(assignment)
+        res_factor.setProbability(assignment, prob)
+    return res_factor
 
 def eliminateWithCallTracking(callTrackingList=None):
 
@@ -151,10 +170,18 @@ def eliminateWithCallTracking(callTrackingList=None):
                     "unconditionedVariables: " + str(factor.unconditionedVariables()))
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # remove eliminated from unconditioned
+        unconded_vars = factor.unconditionedVariables().difference([eliminationVariable])
+        res_factor = Factor(unconded_vars, factor.conditionedVariables(),factor.variableDomainsDict())
+
+        for assignment in factor.getAllPossibleAssignmentDicts():
+            prob = factor.getProbability(assignment)
+            assignment.pop(eliminationVariable) # remove eliminated 
+            prob += res_factor.getProbability(assignment)
+            res_factor.setProbability(assignment, prob)
+        return res_factor
 
     return eliminate
-
 eliminate = eliminateWithCallTracking()
 
 
@@ -206,5 +233,20 @@ def normalize(factor):
                             str(factor))
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    conded_vars = []; unconded_vars = []
+    for var in variableDomainsDict:
+        if (var in factor.conditionedVariables()) or (var in factor.unconditionedVariables()) :
+            # 1 element: conditioned
+            if len(variableDomainsDict[var]) == 1: conded_vars.append(var) 
+            else: unconded_vars.append(var)
 
+    res_factor = Factor(unconded_vars, conded_vars, variableDomainsDict)
+    # normalize
+    normalize_sum = 0
+    for assignment in factor.getAllPossibleAssignmentDicts(): 
+        normalize_sum += factor.getProbability(assignment)
+    for assignment in factor.getAllPossibleAssignmentDicts():
+        prob = factor.getProbability(assignment) / normalize_sum
+        res_factor.setProbability(assignment, prob)
+
+    return res_factor
