@@ -1,0 +1,6 @@
+class: "EvalAgentTest"
+
+# 10 test games after 50 training games
+pacmanParams: "-p ApproximateQAgent -a extractor=BetterExtractor -x 50 -n 60 -l capsuleClassic -g DirectionalGhost -q -f"
+
+scoreThresholds: "600 1200"
