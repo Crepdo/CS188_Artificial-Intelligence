@@ -12,6 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+from re import S
 from game import *
 from learningAgents import ReinforcementAgent
 from featureExtractors import *
@@ -43,6 +44,7 @@ class QLearningAgent(ReinforcementAgent):
         ReinforcementAgent.__init__(self, **args)
 
         "*** YOUR CODE HERE ***"
+        self.q_values = util.Counter()
 
     def getQValue(self, state, action):
         """
@@ -51,7 +53,7 @@ class QLearningAgent(ReinforcementAgent):
           or the Q node value otherwise
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.q_values[(state, action)]
 
 
     def computeValueFromQValues(self, state):
@@ -62,7 +64,12 @@ class QLearningAgent(ReinforcementAgent):
           terminal state, you should return a value of 0.0.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        if self.getLegalActions == None: return 0.0
+        best_q_val = float('-inf')
+        # return the action with the best q_val
+        for action in self.getLegalActions(state):
+          if self.getQValue(state,action) > best_q_val: best_q_val = self.getQValue(state,action)
+        return best_q_val
 
     def computeActionFromQValues(self, state):
         """
@@ -71,7 +78,10 @@ class QLearningAgent(ReinforcementAgent):
           you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        if self.getLegalActions == None: return None
+        best_q_val = self.getValue(state)
+        for action in self.getLegalActions(state):
+          if self.getQValue(state,action) == best_q_val: return action
 
     def getAction(self, state):
         """
@@ -88,9 +98,9 @@ class QLearningAgent(ReinforcementAgent):
         legalActions = self.getLegalActions(state)
         action = None
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
-
-        return action
+        if legalActions == None: return None
+        if util.flipCoin(self.epsilon): return random.choice(legalActions)
+        else: return self.getPolicy(state)
 
     def update(self, state, action, nextState, reward):
         """
@@ -102,7 +112,10 @@ class QLearningAgent(ReinforcementAgent):
           it will be called on your behalf
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # Q learning
+        # Q(s,a) = (1-alpha)*Q(s,a) + alpha*[sample=R(s,a,s') + discount*(max_a' Q(s',a'))]
+        max_trans_Q = self.getQValue(nextState, self.getPolicy(nextState))
+        self.q_values[(state, action)] = (1-self.alpha)*self.getQValue(state, action) + self.alpha*(reward + self.discount*max_trans_Q)
 
     def getPolicy(self, state):
         return self.computeActionFromQValues(state)
@@ -165,14 +178,25 @@ class ApproximateQAgent(PacmanQAgent):
           where * is the dotProduct operator
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # getFeatures: return features = util.Counter()
+        q_value = 0
+        if action == None: return q_value
+        for feature, val in self.featExtractor.getFeatures(state, action).items():
+            q_value += self.weights[feature] * val
+        return q_value
 
     def update(self, state, action, nextState, reward):
         """
            Should update your weights based on transition
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # Approximate Q learning
+        # Q(s,a) = Q(s,a) + alpha*[difference = (r + discount * max_a'Q(s',a')) - Q(s,a)]
+        # Wi = Wi + alpha*[difference]*fi(s,a)
+        max_trans_Q = self.getQValue(nextState, self.getPolicy(nextState))
+        diff_val = reward + self.discount * max_trans_Q - self.getQValue(state, action)
+        for feature, value in self.featExtractor.getFeatures(state, action).items():
+            self.weights[feature] += self.alpha * diff_val * value
 
     def final(self, state):
         "Called at the end of each game."
@@ -189,7 +213,33 @@ class BetterExtractor(FeatureExtractor):
     "Your extractor entry goes here.  Add features for capsuleClassic."
     
     def getFeatures(self, state, action):
-        features = SimpleExtractor().getFeatures(state, action)
+        # features = SimpleExtractor().getFeatures(state, action)
         # Add more features here
         "*** YOUR CODE HERE ***"
+        food = state.getFood()
+        walls = state.getWalls()
+        ghosts = state.getGhostPositions()
+
+        features = util.Counter()
+
+        features["bias"] = 1.0
+
+        # compute the location of pacman after he takes the action
+        x, y = state.getPacmanPosition()
+        dx, dy = Actions.directionToVector(action)
+        next_x, next_y = int(x + dx), int(y + dy)
+
+        # count the number of ghosts 1-step away
+        features["#-of-ghosts-1-step-away"] = sum((next_x, next_y) in Actions.getLegalNeighbors(g, walls) for g in ghosts)
+
+        # if there is no danger of ghosts then add the food feature
+        if not features["#-of-ghosts-1-step-away"] and food[next_x][next_y]:
+            features["eats-food"] = 1.0
+
+        dist = closestFood((next_x, next_y), food, walls)
+        if dist is not None:
+            # make the distance a number less than one otherwise the update
+            # will diverge wildly
+            features["closest-food"] = float(dist) / (walls.width * walls.height)
+        features.divideAll(10.0)
         return features
