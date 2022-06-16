@@ -7,7 +7,7 @@ Shanghaiteh CS181 Artificial Intelligence 1 Spring 2022
 ---
 It is based on CS188, and covers all its contents: programming project and writing homework. I also include my modified version of slides, with some extra notes.
 
-CS181 Including some extra topics in [AIMA](http://aima.cs.berkeley.edu/):
+CS181 Including some extra topics in [AIMA](http://aima.cs.berkeley.edu/):  
 First-order logic  
 Propositional logic  
 Markov logic  
