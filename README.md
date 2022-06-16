@@ -4,7 +4,7 @@ UC Berkeley CS188 Introduction to Artificial Intelligence Fall 2021 &
 Shanghaiteh CS181 Artificial Intelligence 1 Spring 2022
 
 ### Introduction
-
+---
 It is based on CS188, and covers all its contents: programming project and writing homework. I also include my modified version of slides, with some extra notes.
 
 CS181 Including some extra topics in [AIMA](http://aima.cs.berkeley.edu/):
@@ -14,7 +14,7 @@ Markov logic
 NLP basics  
 
 ### Project
-
+---
 Our project is targeting at predicting the covid infection outcome of  large group of people based on their health - related factors.   
 
 We performed Multiple methods on the dataset, including Naïve Bayes, Decision Trees, SVM, Neural Networks ...   
