@@ -21,7 +21,7 @@ We performed Multiple methods on the dataset, including Naïve Bayes, Decision T
 
 You can check  ```Project_Covid_Predicition\Project_report.pdf``` for more details.  
 
-The scale of this project is limited due to the timeline of this course is compressed due to the covid outbreak in Shanghai.  : (
+The scale of this project is limited because the timeline of this course is compressed due to the covid outbreak in Shanghai.  : (
 
 ---
 
